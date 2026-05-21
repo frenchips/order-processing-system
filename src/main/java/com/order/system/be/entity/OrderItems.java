@@ -14,10 +14,12 @@ public class OrderItems {
     private Long orderItemsId;
 
     @JoinColumn(name = "order_id", referencedColumnName = "id")
+    @ManyToOne
     private Orders orders;
 
-    @Column(name = "product_id")
-    private Integer productId;
+    @JoinColumn(name = "product_id", referencedColumnName = "productId")
+    @ManyToOne
+    private Products productId;
 
     @Column(name = "quantity")
     private Integer quantity;
