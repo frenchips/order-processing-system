@@ -1,20 +1,11 @@
 package com.order.system.be.controller;
 
 import com.order.system.be.dto.notificationDto.NotificationResponse;
-<<<<<<< HEAD
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-@RestController
-public class NotificationController {
-
-    @GetMapping("/notifications")
-    public ResponseEntity<NotificationResponse> getListNotification(){
-        return null;
-=======
 import com.order.system.be.entity.Notifications;
 import com.order.system.be.repository.NotificationRepository;
+import com.order.system.be.service.NotificationService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,22 +15,16 @@ import java.util.stream.Collectors;
 
 @RestController
 public class NotificationController {
-    private final NotificationRepository notificationsRepository;
+    private final NotificationService notificationService;
 
-    public NotificationController(NotificationRepository notificationsRepository) {
-        this.notificationsRepository = notificationsRepository;
+    public NotificationController(NotificationService notificationService) {
+        this.notificationService = notificationService;
     }
 
-    @GetMapping
-    public List<NotificationResponse> getUserNotifications(@RequestParam("userId") String userId) {
-        List<Notifications> notificationsList = notificationsRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    @GetMapping("/notifications")
+    public ResponseEntity<List<NotificationResponse>> getUserNotifications(@RequestParam("userId") String userId) {
+        List<NotificationResponse> notificationsList = notificationService.getUserNotifications(userId);
 
-        return notificationsList.stream().map(notif -> new NotificationResponse(
-                notif.getUserId(),
-                notif.getMessage(),
-                notif.getIsRead(),
-                notif.getCreatedAt()
-        )).collect(Collectors.toList());
->>>>>>> 7a126d3d81564ddcf1a31431a679aded9c841fc0
+        return ResponseEntity.status(HttpStatus.OK).body(notificationsList);
     }
 }

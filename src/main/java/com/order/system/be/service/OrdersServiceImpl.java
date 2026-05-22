@@ -37,37 +37,67 @@ public class OrdersServiceImpl implements OrdersService{
         orders.setUserId(request.getUserId());
         orders.setStatus("PENDING");
 
-        List<OrderItems> orderItemsList = new ArrayList<>();
-        int calculatedTotalAmount = 0;
-        for(OrderItemRequest orderItemRequest : request.getListOrderItemsRequest()){
 
-            if(orderItemRequest.getQuantity() == null || orderItemRequest.getQuantity() <= 0){
-                throw new RuntimeException(String.format("Quantity %d harus lebih dari 0", orderItemRequest.getQuantity()));
+        orders.setOrderItemsList(new ArrayList<>());
+
+        try {
+            List<OrderItems> orderItemsList = new ArrayList<>();
+            int calculatedTotalAmount = 0;
+
+            for(OrderItemRequest orderItemRequest : request.getListOrderItemsRequest()){
+
+                if(orderItemRequest.getQuantity() == null || orderItemRequest.getQuantity() <= 0){
+                    throw new RuntimeException(String.format("Quantity %d harus lebih dari 0", orderItemRequest.getQuantity()));
+                }
+
+                Products product = productsRepository.findById(orderItemRequest.getProductId())
+                        .orElseThrow(() -> new RuntimeException("Product dengan ID " + orderItemRequest.getProductId() + " tidak ditemukan"));
+
+                if(product.getStock() < orderItemRequest.getQuantity()){
+                    throw new RuntimeException(String.format("Stok untuk produk %s tidak mencukupi. Sisa stok %d", product.getName(), product.getStock()));
+                }
+
+                OrderItems orderItems = new OrderItems();
+                orderItems.setOrders(orders);
+                orderItems.setProduct(product);
+                orderItems.setPrice(orderItemRequest.getPrice());
+                orderItems.setQuantity(orderItemRequest.getQuantity());
+
+                calculatedTotalAmount += (product.getPrice() * orderItemRequest.getQuantity());
+                orderItemsList.add(orderItems);
             }
 
-            Products product = productsRepository.findById(orderItemRequest.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product dengan ID " + orderItemRequest.getProductId() + " tidak ditemukan"));
 
-            if(product.getStock() < orderItemRequest.getQuantity()){
-                throw new RuntimeException(String.format("Stok untuk produk %s tidak mencukupi. Sisa stok %d",product.getName(), product.getStock()));
-            }
-            OrderItems orderItems = new OrderItems();
-            orderItems.setOrders(orders);
-            orderItems.setProduct(product);
-            orderItems.setPrice(orderItemRequest.getPrice());
-            orderItems.setQuantity(orderItemRequest.getQuantity());
+            orders.setOrderItemsList(orderItemsList);
+            orders.setTotalAmount(calculatedTotalAmount);
 
-            calculatedTotalAmount += (product.getPrice() * orderItemRequest.getQuantity());
-            orderItemsList.add(orderItems);
+            ordersRepsitory.save(orders);
+            publishOrderCreatedEvent(orders);
+
+            return mapToOrderResponse(orders);
+
+        } catch (RuntimeException e) {
+            System.err.println("Menangkap error validasi stok awal: " + e.getMessage());
+
+            orders.setStatus("FAILED");
+
+
+            orders.setTotalAmount(0);
+
+
+            Orders savedFailedOrder = ordersRepsitory.save(orders);
+
+
+            OrderProcessEvent failedEvent = new OrderProcessEvent(savedFailedOrder.getOrdersId(), "FAILED");
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.EXCHANGE_ORDER,
+                    RabbitMQConfig.ROUTING_ORDER_FAILED,
+                    failedEvent
+            );
+
+
+            return mapToOrderResponse(savedFailedOrder);
         }
-        orders.setOrderItemsList(orderItemsList);
-        orders.setTotalAmount(calculatedTotalAmount);
-
-        ordersRepsitory.save(orders);
-
-        publishOrderCreatedEvent(orders);
-
-        return mapToOrderResponse(orders);
     }
 
     @Override
@@ -98,14 +128,18 @@ public class OrdersServiceImpl implements OrdersService{
     }
 
     private OrderResponse mapToOrderResponse(Orders orders) {
-        List<OrderItemResponse> itemResponses = orders.getOrderItemsList().stream().map(item ->
-                new OrderItemResponse(
-                        orders.getOrdersId(),
-                        item.getProduct().getProductId(),
-                        item.getQuantity(),
-                        item.getPrice()
-                )
-        ).collect(Collectors.toList());
+        List<OrderItemResponse> itemResponses = new ArrayList<>();
+
+        if (orders.getOrderItemsList() != null) {
+            itemResponses = orders.getOrderItemsList().stream().map(item ->
+                    new OrderItemResponse(
+                            orders.getOrdersId(),
+                            item.getProduct().getProductId(),
+                            item.getQuantity(),
+                            item.getPrice()
+                    )
+            ).collect(Collectors.toList());
+        }
 
         return new OrderResponse(
                 orders.getOrdersId(),
@@ -133,7 +167,6 @@ public class OrdersServiceImpl implements OrdersService{
                 throw new RuntimeException("Stok tidak mencukupi untuk produk: " + product.getName());
             }
 
-
             product.setStock(product.getStock() - item.getQuantity());
             productsToUpdate.add(product);
         }
@@ -152,6 +185,4 @@ public class OrdersServiceImpl implements OrdersService{
             ordersRepsitory.save(order);
         });
     }
-
-
 }

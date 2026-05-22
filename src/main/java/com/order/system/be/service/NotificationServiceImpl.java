@@ -4,7 +4,6 @@ import com.order.system.be.dto.notificationDto.NotificationResponse;
 import com.order.system.be.entity.Notifications;
 import com.order.system.be.repository.NotificationRepository;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,4 +27,6 @@ public class NotificationServiceImpl implements NotificationService{
                 notif.getCreatedAt()
         )).collect(Collectors.toList());
     }
+
+
 }

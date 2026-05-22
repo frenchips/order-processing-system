@@ -1,15 +1,13 @@
 package com.order.system.be.service;
 
-import com.order.system.be.dto.orderDto.OrderItemResponse;
-import com.order.system.be.dto.orderDto.OrderResponse;
+
 import com.order.system.be.dto.productDto.ProductResponse;
-import com.order.system.be.entity.Orders;
 import com.order.system.be.entity.Products;
 import com.order.system.be.repository.ProductsRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService{
@@ -33,5 +31,16 @@ public class ProductServiceImpl implements ProductService{
                 products.getStock(),
                 products.getPrice()
         );
+    }
+
+    @Override
+    public Page<ProductResponse> getAllProducts(Pageable pageable) {
+        Page<Products> products = productsRepository.findAll(pageable);
+
+        return products.map(product -> new ProductResponse(
+                product.getName(),
+                product.getPrice(),
+                product.getStock()
+        ));
     }
 }

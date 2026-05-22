@@ -1,7 +1,6 @@
 package com.order.system.be.service;
 
 import com.order.system.be.dto.orderDto.OrderCreatedEvent;
-import com.order.system.be.dto.orderDto.OrderProcessEvent;
 import com.order.system.be.dto.orderDto.OrderRequest;
 import com.order.system.be.dto.orderDto.OrderResponse;
 

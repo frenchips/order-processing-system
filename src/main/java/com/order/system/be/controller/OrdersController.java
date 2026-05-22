@@ -27,9 +27,4 @@ public class OrdersController {
         OrderResponse response = ordersService.findOrderDetail(id);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-
-    @GetMapping("/orders/{id}")
-    public ResponseEntity<OrderResponse> getOrderDetail(@PathVariable("id") Long id){
-        return null;
-    }
 }
