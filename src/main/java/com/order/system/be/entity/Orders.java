@@ -3,8 +3,11 @@ package com.order.system.be.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 @Table(name = "orders")
 @Entity
@@ -26,4 +29,8 @@ public class Orders {
 
     @Column(name = "created_at")
     private Timestamp createdAt;
+
+    @Fetch(FetchMode.SUBSELECT)
+    @OneToMany( cascade = CascadeType.ALL,  fetch = FetchType.LAZY, mappedBy = "orders", orphanRemoval = true)
+    List<OrderItems> orderItemsList;
 }
