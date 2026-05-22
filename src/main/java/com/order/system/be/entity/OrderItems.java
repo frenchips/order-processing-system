@@ -13,13 +13,13 @@ public class OrderItems {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderItemsId;
 
-    @JoinColumn(name = "order_id", referencedColumnName = "id")
+    @JoinColumn(name = "order_id", referencedColumnName = "ordersId")
     @ManyToOne
     private Orders orders;
 
     @JoinColumn(name = "product_id", referencedColumnName = "productId")
     @ManyToOne
-    private Products productId;
+    private Products product;
 
     @Column(name = "quantity")
     private Integer quantity;

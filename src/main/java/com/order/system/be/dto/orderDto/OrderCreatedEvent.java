@@ -5,18 +5,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.sql.Timestamp;
 import java.util.List;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderResponse {
+public class OrderCreatedEvent {
     private Long orderId;
     private String userId;
-    private Integer totalAmount;
-    private String status;
-    private Timestamp createdAt;
-    private List<OrderItemResponse> listOrderItems;
+    private List<OrderItemEvent> items;
+
+
 }
