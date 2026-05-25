@@ -28,8 +28,8 @@ public class ProductServiceImpl implements ProductService{
     private ProductResponse mapToOrderResponse(Products products) {
         return new ProductResponse(
                 products.getName(),
-                products.getStock(),
-                products.getPrice()
+                products.getPrice(),
+                products.getStock()
         );
     }
 
